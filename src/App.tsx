@@ -1038,7 +1038,9 @@ function AboutView() {
         <div className="aboutContent">
           <strong>Ham Umre Kayıt Sistemi</strong>
           <p>Proje açık kaynak geliştirilmiştir.</p>
-          <p>GitHub bağlantısı daha sonra eklenecektir.</p>
+          <a href="https://github.com/akoc95/Hac-Umre-Kayit-Sistemi" target="_blank" rel="noreferrer">
+            akoc95/Hac-Umre-Kayit-Sistemi
+          </a>
         </div>
       </section>
     </section>

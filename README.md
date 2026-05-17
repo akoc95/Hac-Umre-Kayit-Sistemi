@@ -45,4 +45,6 @@ npm run dist:win
 
 ## Not
 
-Bu proje açık kaynak olarak geliştirilmiştir. GitHub bağlantısı daha sonra eklenecektir.
+Bu proje açık kaynak olarak geliştirilmiştir.
+
+GitHub: [akoc95/Hac-Umre-Kayit-Sistemi](https://github.com/akoc95/Hac-Umre-Kayit-Sistemi)
