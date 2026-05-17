@@ -17,7 +17,7 @@ function createWindow() {
     height: 820,
     minWidth: 1024,
     minHeight: 680,
-    title: 'Ham Umre Kayıt Sistemi',
+    title: 'Hac Umre Kayıt Sistemi',
     icon: resolveAppIconPath(),
     backgroundColor: '#f4f0e8',
     webPreferences: {
@@ -136,7 +136,7 @@ function registerIpc() {
 }
 
 app.whenReady().then(async () => {
-  app.setAppUserModelId('com.hamumre.kayitsistemi');
+  app.setAppUserModelId('com.hacumre.kayitsistemi');
   const dbPath = path.join(app.getPath('userData'), 'hac-umre.sqlite');
   const wasmFilePath = resolveSqlWasmPath();
   store = await createDatabaseStore({ dbPath, wasmFilePath }).init();

@@ -170,7 +170,7 @@ export default function App() {
         <div className="brand">
           <Hotel size={28} aria-hidden />
           <div>
-            <strong>Ham Umre</strong>
+            <strong>Hac Umre</strong>
             <span>Kayıt Sistemi</span>
           </div>
         </div>
@@ -1036,7 +1036,7 @@ function AboutView() {
       <section className="panel aboutPanel">
         <PanelTitle title="Hakkında" />
         <div className="aboutContent">
-          <strong>Ham Umre Kayıt Sistemi</strong>
+          <strong>Hac Umre Kayıt Sistemi</strong>
           <p>Proje açık kaynak geliştirilmiştir.</p>
           <a href="https://github.com/akoc95/Hac-Umre-Kayit-Sistemi" target="_blank" rel="noreferrer">
             akoc95/Hac-Umre-Kayit-Sistemi

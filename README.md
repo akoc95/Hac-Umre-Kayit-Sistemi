@@ -1,6 +1,6 @@
-# Ham Umre Kayıt Sistemi
+# Hac Umre Kayıt Sistemi
 
-Ham Umre turları için hazırlanmış basit bir masaüstü kayıt ve odalama uygulamasıdır.
+Hac Umre turları için hazırlanmış basit bir masaüstü kayıt ve odalama uygulamasıdır.
 
 Uygulama ile otel ve oda bilgileri girilebilir, tur oluşturulabilir, müşteriler turlara eklenebilir ve oda yerleşimi yapılabilir. Oda yerleşimi PDF olarak, müşteri listesi ise Excel olarak dışa aktarılabilir.
 

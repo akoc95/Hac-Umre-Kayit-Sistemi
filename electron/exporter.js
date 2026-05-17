@@ -35,7 +35,7 @@ function styleSheet(worksheet) {
 
 async function createCustomersWorkbook(customers) {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'Ham Umre Kayıt Sistemi';
+  workbook.creator = 'Hac Umre Kayıt Sistemi';
   const sheet = workbook.addWorksheet('Müşteriler');
   sheet.columns = [
     { header: 'Ad Soyad', key: 'fullName' },
@@ -71,7 +71,7 @@ async function createCustomersWorkbook(customers) {
 
 async function createRoomingWorkbook(rooms, assignments) {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'Ham Umre Kayıt Sistemi';
+  workbook.creator = 'Hac Umre Kayıt Sistemi';
   const sheet = workbook.addWorksheet('Oda Yerleşimi');
   sheet.columns = [
     { header: 'Otel', key: 'hotelName' },
