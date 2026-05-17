@@ -1,0 +1,640 @@
+:root {
+  color: #22302d;
+  background: #f4f0e8;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 960px;
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: 246px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.sidebar {
+  background: #284743;
+  color: #f8f3ea;
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: sticky;
+  top: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 6px 28px;
+}
+
+.brand strong,
+.brand span {
+  display: block;
+}
+
+.brand strong {
+  font-size: 20px;
+}
+
+.brand span {
+  color: #d7e7d9;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.nav {
+  display: grid;
+  gap: 8px;
+}
+
+.footerNav {
+  margin-top: auto;
+  padding-top: 18px;
+  position: sticky;
+  bottom: 24px;
+}
+
+.navButton {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 12px;
+  color: #edf5ee;
+  background: transparent;
+  text-align: left;
+}
+
+.navButton.active,
+.navButton:hover {
+  background: #3e6962;
+}
+
+.main {
+  min-width: 0;
+  padding: 22px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(100px, 1fr));
+  gap: 10px;
+  width: min(680px, 100%);
+}
+
+.metric {
+  background: #fffdf8;
+  border: 1px solid #ded7c9;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.metric span,
+.metric strong {
+  display: block;
+}
+
+.metric span {
+  color: #66736d;
+  font-size: 12px;
+}
+
+.metric strong {
+  font-size: 22px;
+  margin-top: 2px;
+}
+
+.workspace {
+  min-height: calc(100vh - 120px);
+}
+
+.twoColumn {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.hotelLayout,
+.roomingLayout {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.exportLayout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 360px));
+  align-content: start;
+  gap: 16px;
+}
+
+.aboutLayout {
+  display: grid;
+  align-content: start;
+  max-width: 620px;
+}
+
+.panel {
+  background: #fffdf8;
+  border: 1px solid #ded7c9;
+  border-radius: 8px;
+  padding: 16px;
+  min-width: 0;
+}
+
+.aboutPanel {
+  min-height: 180px;
+}
+
+.aboutContent {
+  display: grid;
+  gap: 8px;
+  color: #53615b;
+  line-height: 1.5;
+}
+
+.aboutContent strong {
+  color: #22302d;
+  font-size: 20px;
+}
+
+.aboutContent p {
+  margin: 0;
+}
+
+.formPanel,
+.stackForm {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+h2 {
+  margin: 0 0 10px;
+  font-size: 17px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: #53615b;
+  font-size: 13px;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid #cfc7b8;
+  border-radius: 7px;
+  background: #fffefa;
+  color: #22302d;
+  padding: 8px 10px;
+  outline: none;
+}
+
+textarea {
+  resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #4c857c;
+  box-shadow: 0 0 0 3px rgba(76, 133, 124, 0.16);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.buttonRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.primaryButton,
+.ghostButton,
+.iconTextButton {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 7px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+}
+
+.primaryButton {
+  color: #fff;
+  background: #316c64;
+}
+
+.primaryButton:hover {
+  background: #285c55;
+}
+
+.ghostButton,
+.iconTextButton {
+  color: #284743;
+  background: #eef4eb;
+  border-color: #c9d8c7;
+}
+
+.compact {
+  width: 100%;
+}
+
+.listPanel {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.listHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.listHeader h2 {
+  margin-bottom: 0;
+}
+
+.searchInput {
+  max-width: 240px;
+}
+
+.tableWrap {
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+th,
+td {
+  padding: 11px 10px;
+  border-bottom: 1px solid #ece4d7;
+  text-align: left;
+  vertical-align: middle;
+}
+
+th {
+  color: #69766f;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+td strong,
+td small {
+  display: block;
+}
+
+td small {
+  color: #728078;
+  margin-top: 2px;
+}
+
+.actions {
+  width: 90px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.actions button {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #45605b;
+}
+
+.actions button:hover {
+  background: #eef4eb;
+}
+
+.emptyCell,
+.emptyBox {
+  color: #6f7c76;
+  text-align: center;
+}
+
+.emptyBox {
+  border: 1px dashed #cfc7b8;
+  border-radius: 8px;
+  padding: 18px;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.hotelList {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.hotelButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #ded7c9;
+  border-radius: 8px;
+  background: #fffaf1;
+  color: #22302d;
+  padding: 12px;
+  text-align: left;
+}
+
+.hotelButton.active,
+.hotelButton:hover {
+  border-color: #4c857c;
+  background: #eef5ec;
+}
+
+.hotelButton strong,
+.hotelButton small {
+  display: block;
+}
+
+.hotelButton small {
+  color: #728078;
+  margin-top: 3px;
+}
+
+.hotelActions {
+  display: flex;
+  gap: 9px;
+  color: #42615b;
+}
+
+.roomForm {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.2fr) minmax(90px, 0.8fr) 120px minmax(120px, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.roomForm h2 {
+  grid-column: 1 / -1;
+}
+
+.selectedCustomer {
+  display: grid;
+  gap: 4px;
+  border: 1px solid #ded7c9;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 12px;
+  background: #fffaf1;
+}
+
+.selectedCustomer small,
+.selectedCustomer span {
+  color: #6f7c76;
+}
+
+.selectedCustomer .ghostButton {
+  margin-top: 8px;
+}
+
+.splitCounts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.splitCounts div {
+  border: 1px solid #ded7c9;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fffaf1;
+}
+
+.splitCounts strong,
+.splitCounts span {
+  display: block;
+}
+
+.splitCounts strong {
+  font-size: 24px;
+}
+
+.splitCounts span {
+  color: #6f7c76;
+  font-size: 13px;
+}
+
+.roomsPanel {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.roomGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.roomCard {
+  border: 1px solid #ded7c9;
+  border-radius: 8px;
+  background: #fffaf1;
+  padding: 12px;
+  display: grid;
+  gap: 12px;
+  min-height: 188px;
+}
+
+.roomCard.full {
+  background: #f5f1ea;
+}
+
+.roomCard header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.roomCard header strong,
+.roomCard header span {
+  display: block;
+}
+
+.roomCard header span {
+  color: #6f7c76;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.roomCard header em {
+  min-width: 44px;
+  height: 28px;
+  border-radius: 7px;
+  background: #e3eadf;
+  color: #284743;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.occupants {
+  display: grid;
+  gap: 7px;
+  min-height: 58px;
+}
+
+.occupants div {
+  border-radius: 7px;
+  background: #ffffff;
+  border: 1px solid #ece4d7;
+  padding: 7px 8px;
+}
+
+.occupants span,
+.occupants small {
+  display: block;
+}
+
+.occupants small {
+  color: #6f7c76;
+}
+
+.exportButton {
+  min-height: 170px;
+  display: grid;
+  justify-items: start;
+  align-content: start;
+  gap: 10px;
+  border: 1px solid #ded7c9;
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #22302d;
+  padding: 18px;
+  text-align: left;
+}
+
+.exportButton:hover {
+  border-color: #4c857c;
+  background: #eef5ec;
+}
+
+.exportButton strong {
+  font-size: 18px;
+}
+
+.exportButton span {
+  color: #65736d;
+  line-height: 1.45;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+
+.notice.success {
+  background: #e7f4e2;
+  color: #245339;
+}
+
+.notice.error {
+  background: #fbe5df;
+  color: #8c2d20;
+}
+
+.notice.info {
+  background: #e5eef8;
+  color: #264d72;
+}
+
+.notice button {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+}
+
+.loading {
+  display: grid;
+  min-height: 360px;
+  place-items: center;
+  color: #6f7c76;
+}
+
+@media (max-width: 1100px) {
+  .twoColumn,
+  .hotelLayout,
+  .roomingLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .roomForm {
+    grid-template-columns: 1fr 1fr;
+  }
+}

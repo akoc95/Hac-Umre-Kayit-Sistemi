@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+.vite/
+.vs/
+release/
+*.log
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
