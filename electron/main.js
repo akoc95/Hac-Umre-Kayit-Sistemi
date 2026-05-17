@@ -42,6 +42,20 @@ function resolveSqlWasmPath() {
   return path.join(app.getAppPath(), relativePath);
 }
 
+function timestampForFileName() {
+  const now = new Date();
+  const pad = (value) => String(value).padStart(2, '0');
+  return [
+    now.getFullYear(),
+    pad(now.getMonth() + 1),
+    pad(now.getDate()),
+  ].join('-') + '_' + [
+    pad(now.getHours()),
+    pad(now.getMinutes()),
+    pad(now.getSeconds()),
+  ].join('-');
+}
+
 function channel(name, handler) {
   ipcMain.handle(name, async (_event, payload) => {
     try {
@@ -108,7 +122,7 @@ function registerIpc() {
     }
     const result = await dialog.showSaveDialog(mainWindow, {
       title: 'PDF olarak kaydet',
-      defaultPath: 'oda-yerlesimi.pdf',
+      defaultPath: `oda-yerlesimi_${timestampForFileName()}.pdf`,
       filters: [{ name: 'PDF Dosyası', extensions: ['pdf'] }],
     });
 
