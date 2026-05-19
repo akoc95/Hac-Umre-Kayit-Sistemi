@@ -8,7 +8,7 @@ let mainWindow;
 let store;
 
 function resolveAppIconPath() {
-  return path.join(__dirname, 'assets', 'kabe.png');
+  return path.join(__dirname, 'assets', 'logo.png');
 }
 
 function createWindow() {
@@ -116,13 +116,21 @@ function registerIpc() {
     return { canceled: false, filePath: result.filePath };
   });
 
-  channel('exports:pdf', async ({ kind }) => {
+  channel('exports:pdf', async ({ kind, tourId }) => {
     if (kind !== 'rooming') {
       throw new Error('PDF çıktısı yalnızca oda yerleşimi için hazırlanır.');
     }
+    const selectedTourId = Number(tourId);
+    if (!Number.isFinite(selectedTourId) || selectedTourId <= 0) {
+      throw new Error('PDF çıktısı için tur seçin.');
+    }
+    const tour = store.listTours().find((item) => item.id === selectedTourId);
+    if (!tour) {
+      throw new Error('Tur bulunamadı.');
+    }
     const result = await dialog.showSaveDialog(mainWindow, {
       title: 'PDF olarak kaydet',
-      defaultPath: `oda-yerlesimi_${timestampForFileName()}.pdf`,
+      defaultPath: `oda-yerlesimi_${tour.name}_${timestampForFileName()}.pdf`,
       filters: [{ name: 'PDF Dosyası', extensions: ['pdf'] }],
     });
 
@@ -130,7 +138,9 @@ function registerIpc() {
       return { canceled: true };
     }
 
-    await writeRoomingPdf(result.filePath, store.listRooms(), store.listAssignments());
+    const rooms = store.listRooms().filter((room) => room.hotelId === tour.hotelId);
+    const assignments = store.listAssignments().filter((assignment) => assignment.tourId === selectedTourId);
+    await writeRoomingPdf(result.filePath, rooms, assignments, { title: tour.name });
     return { canceled: false, filePath: result.filePath };
   });
 }

@@ -34,7 +34,7 @@ declare global {
       rooms: {
         list: () => Promise<ApiResult<Room[]>>;
         create: (payload: RoomInput) => Promise<ApiResult<number>>;
-        update: (id: number, payload: Omit<RoomInput, 'hotelId'>) => Promise<ApiResult<number>>;
+        update: (id: number, payload: Pick<RoomInput, 'capacity' | 'notes'>) => Promise<ApiResult<number>>;
         delete: (id: number) => Promise<ApiResult<number>>;
       };
       assignments: {
@@ -45,7 +45,7 @@ declare global {
       };
       exports: {
         excel: (kind: 'customers' | 'rooming') => Promise<ApiResult<{ canceled: boolean; filePath?: string }>>;
-        pdf: (kind: 'rooming') => Promise<ApiResult<{ canceled: boolean; filePath?: string }>>;
+        pdf: (kind: 'rooming', tourId: number) => Promise<ApiResult<{ canceled: boolean; filePath?: string }>>;
       };
     };
   }

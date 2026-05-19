@@ -51,6 +51,7 @@ function rowToCustomer(row) {
     gender: row.gender,
     passengerType: row.passenger_type || 'adult',
     birthDate: row.birth_date,
+    connection: row.connection,
     groupName: row.group_name,
     tourId: row.tour_id || 0,
     tourName: row.tour_name,
@@ -108,6 +109,7 @@ function rowToAssignment(row) {
     customerId: row.customer_id,
     customerName: row.customer_name,
     customerGender: row.customer_gender,
+    tourId: row.tour_id || 0,
     roomId: row.room_id,
     roomNo: row.room_no,
     hotelId: row.hotel_id,
@@ -177,6 +179,7 @@ function createDatabaseStore(options) {
         gender TEXT NOT NULL CHECK (gender IN ('male', 'female')),
         passenger_type TEXT NOT NULL DEFAULT 'adult' CHECK (passenger_type IN ('adult', 'child')),
         birth_date TEXT,
+        connection TEXT,
         group_name TEXT,
         tour_id INTEGER,
         notes TEXT,
@@ -233,6 +236,9 @@ function createDatabaseStore(options) {
     }
     if (!hasColumn(db, 'customers', 'passenger_type')) {
       db.run("ALTER TABLE customers ADD COLUMN passenger_type TEXT NOT NULL DEFAULT 'adult' CHECK (passenger_type IN ('adult', 'child'))");
+    }
+    if (!hasColumn(db, 'customers', 'connection')) {
+      db.run('ALTER TABLE customers ADD COLUMN connection TEXT');
     }
     persist();
   }
@@ -306,8 +312,8 @@ function createDatabaseStore(options) {
       db.run(
         `
         INSERT INTO customers
-          (full_name, document_no, phone, gender, passenger_type, birth_date, group_name, tour_id, notes, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (full_name, document_no, phone, gender, passenger_type, birth_date, connection, group_name, tour_id, notes, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         [
           toRequiredString(input.fullName, 'Ad soyad'),
@@ -316,6 +322,7 @@ function createDatabaseStore(options) {
           assertGender(input.gender),
           assertPassengerType(input.passengerType),
           toOptionalString(input.birthDate),
+          toOptionalString(input.connection),
           null,
           toOptionalTourId(input.tourId),
           toOptionalString(input.notes),
@@ -342,6 +349,7 @@ function createDatabaseStore(options) {
             gender = ?,
             passenger_type = ?,
             birth_date = ?,
+            connection = ?,
             group_name = ?,
             tour_id = ?,
             notes = ?,
@@ -355,6 +363,7 @@ function createDatabaseStore(options) {
           assertGender(input.gender),
           assertPassengerType(input.passengerType),
           toOptionalString(input.birthDate),
+          toOptionalString(input.connection),
           null,
           toOptionalTourId(input.tourId),
           toOptionalString(input.notes),
@@ -453,6 +462,26 @@ function createDatabaseStore(options) {
     ).map(rowToTour);
   }
 
+  function resolveUniqueTourName(requestedName, excludedTourId = 0) {
+    const names = new Set(
+      runSelect(db, 'SELECT name FROM tours WHERE id <> ?', [excludedTourId])
+        .map((row) => row.name)
+        .filter(Boolean)
+    );
+    if (!names.has(requestedName)) {
+      return requestedName;
+    }
+
+    const baseName = requestedName.replace(/\s+#\d+$/, '').trim() || requestedName;
+    let index = 2;
+    let candidate = `${baseName} #${index}`;
+    while (names.has(candidate)) {
+      index += 1;
+      candidate = `${baseName} #${index}`;
+    }
+    return candidate;
+  }
+
   function createTour(input) {
     return write(() => {
       const hotelId = toOptionalTourId(input.hotelId);
@@ -464,10 +493,11 @@ function createDatabaseStore(options) {
         throw new Error('Otel bulunamadı.');
       }
       const createdAt = nowIso();
+      const name = resolveUniqueTourName(toRequiredString(input.name, 'Tur adı'));
       db.run(
         'INSERT INTO tours (name, start_date, end_date, hotel_id, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
         [
-          toRequiredString(input.name, 'Tur adı'),
+          name,
           toOptionalString(input.startDate),
           toOptionalString(input.endDate),
           hotelId,
@@ -494,10 +524,11 @@ function createDatabaseStore(options) {
       if (!hotel) {
         throw new Error('Otel bulunamadı.');
       }
+      const name = resolveUniqueTourName(toRequiredString(input.name, 'Tur adı'), id);
       db.run(
         'UPDATE tours SET name = ?, start_date = ?, end_date = ?, hotel_id = ?, notes = ?, updated_at = ? WHERE id = ?',
         [
-          toRequiredString(input.name, 'Tur adı'),
+          name,
           toOptionalString(input.startDate),
           toOptionalString(input.endDate),
           hotelId,
@@ -541,6 +572,13 @@ function createDatabaseStore(options) {
     ).map(rowToRoom);
   }
 
+  function nextRoomNo(hotelId) {
+    const next = getScalar(db, 'SELECT COUNT(*) + 1 AS next_no FROM rooms WHERE hotel_id = ?', [hotelId]);
+    const candidate = `AUTO-${next}`;
+    const exists = getOne(db, 'SELECT id FROM rooms WHERE hotel_id = ? AND room_no = ?', [hotelId, candidate]);
+    return exists ? `AUTO-${Date.now()}` : candidate;
+  }
+
   function createRoom(input) {
     return write(() => {
       const capacity = Number(input.capacity);
@@ -556,7 +594,7 @@ function createDatabaseStore(options) {
         'INSERT INTO rooms (hotel_id, room_no, capacity, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
         [
           input.hotelId,
-          toRequiredString(input.roomNo, 'Oda no'),
+          nextRoomNo(input.hotelId),
           capacity,
           toOptionalString(input.notes),
           createdAt,
@@ -573,13 +611,26 @@ function createDatabaseStore(options) {
       if (![1, 2, 3, 4].includes(capacity)) {
         throw new Error('Oda kapasitesi 1, 2, 3 veya 4 olmalı.');
       }
-      const currentCount = getScalar(db, 'SELECT COUNT(*) AS count FROM room_assignments WHERE room_id = ?', [id]);
+      const currentCount = getScalar(
+        db,
+        `
+        SELECT COALESCE(MAX(occupant_count), 0) AS count
+        FROM (
+          SELECT COUNT(*) AS occupant_count
+          FROM room_assignments ra
+          INNER JOIN customers c ON c.id = ra.customer_id
+          WHERE ra.room_id = ?
+          GROUP BY c.tour_id
+        )
+        `,
+        [id]
+      );
       if (currentCount > capacity) {
         throw new Error('Yeni kapasite odadaki mevcut kişi sayısından küçük olamaz.');
       }
       db.run(
-        'UPDATE rooms SET room_no = ?, capacity = ?, notes = ?, updated_at = ? WHERE id = ?',
-        [toRequiredString(input.roomNo, 'Oda no'), capacity, toOptionalString(input.notes), nowIso(), id]
+        'UPDATE rooms SET capacity = ?, notes = ?, updated_at = ? WHERE id = ?',
+        [capacity, toOptionalString(input.notes), nowIso(), id]
       );
       return id;
     });
@@ -606,6 +657,7 @@ function createDatabaseStore(options) {
         c.id AS customer_id,
         c.full_name AS customer_name,
         c.gender AS customer_gender,
+        c.tour_id,
         r.id AS room_id,
         r.room_no,
         h.id AS hotel_id,
@@ -620,26 +672,47 @@ function createDatabaseStore(options) {
   }
 
   function validateRooming(customerId, roomId) {
-    const customer = getOne(db, 'SELECT id, full_name, gender FROM customers WHERE id = ?', [customerId]);
+    const customer = getOne(
+      db,
+      `
+      SELECT c.id, c.full_name, c.gender, c.tour_id, t.hotel_id AS tour_hotel_id
+      FROM customers c
+      LEFT JOIN tours t ON t.id = c.tour_id
+      WHERE c.id = ?
+      `,
+      [customerId]
+    );
     if (!customer) {
       throw new Error('Müşteri bulunamadı.');
     }
 
-    const room = getOne(db, 'SELECT id, capacity FROM rooms WHERE id = ?', [roomId]);
+    const room = getOne(db, 'SELECT id, hotel_id, capacity FROM rooms WHERE id = ?', [roomId]);
     if (!room) {
       throw new Error('Oda bulunamadı.');
+    }
+    if (!customer.tour_id) {
+      throw new Error('Odalama için müşteri turu seçilmelidir.');
+    }
+    if (customer.tour_hotel_id && customer.tour_hotel_id !== room.hotel_id) {
+      throw new Error('Müşteri sadece kendi tur oteline yerleştirilebilir.');
     }
 
     const currentAssignment = getOne(db, 'SELECT room_id FROM room_assignments WHERE customer_id = ?', [customerId]);
     const occupancy = getScalar(
       db,
-      'SELECT COUNT(*) AS count FROM room_assignments WHERE room_id = ? AND customer_id <> ?',
-      [roomId, customerId]
+      `
+      SELECT COUNT(*) AS count
+      FROM room_assignments ra
+      INNER JOIN customers c ON c.id = ra.customer_id
+      WHERE ra.room_id = ?
+        AND c.tour_id = ?
+        AND c.id <> ?
+      `,
+      [roomId, customer.tour_id, customerId]
     );
     if (occupancy >= room.capacity) {
       throw new Error('Oda kapasitesi dolu.');
     }
-
 
     return { currentRoomId: currentAssignment ? currentAssignment.room_id : null };
   }

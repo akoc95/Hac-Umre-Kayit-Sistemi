@@ -27,9 +27,94 @@ const emptyCustomer: CustomerInput = {
   gender: 'male',
   passengerType: 'adult',
   birthDate: '',
+  connection: '',
   tourId: 0,
   notes: '',
 };
+
+const turkishProvinces = [
+  'Adana',
+  'Adıyaman',
+  'Afyonkarahisar',
+  'Ağrı',
+  'Aksaray',
+  'Amasya',
+  'Ankara',
+  'Antalya',
+  'Ardahan',
+  'Artvin',
+  'Aydın',
+  'Balıkesir',
+  'Bartın',
+  'Batman',
+  'Bayburt',
+  'Bilecik',
+  'Bingöl',
+  'Bitlis',
+  'Bolu',
+  'Burdur',
+  'Bursa',
+  'Çanakkale',
+  'Çankırı',
+  'Çorum',
+  'Denizli',
+  'Diyarbakır',
+  'Düzce',
+  'Edirne',
+  'Elazığ',
+  'Erzincan',
+  'Erzurum',
+  'Eskişehir',
+  'Gaziantep',
+  'Giresun',
+  'Gümüşhane',
+  'Hakkari',
+  'Hatay',
+  'Iğdır',
+  'Isparta',
+  'İstanbul',
+  'İzmir',
+  'Kahramanmaraş',
+  'Karabük',
+  'Karaman',
+  'Kars',
+  'Kastamonu',
+  'Kayseri',
+  'Kırıkkale',
+  'Kırklareli',
+  'Kırşehir',
+  'Kilis',
+  'Kocaeli',
+  'Konya',
+  'Kütahya',
+  'Malatya',
+  'Manisa',
+  'Mardin',
+  'Mersin',
+  'Muğla',
+  'Muş',
+  'Nevşehir',
+  'Niğde',
+  'Ordu',
+  'Osmaniye',
+  'Rize',
+  'Sakarya',
+  'Samsun',
+  'Şanlıurfa',
+  'Siirt',
+  'Sinop',
+  'Şırnak',
+  'Sivas',
+  'Tekirdağ',
+  'Tokat',
+  'Trabzon',
+  'Tunceli',
+  'Uşak',
+  'Van',
+  'Yalova',
+  'Yozgat',
+  'Zonguldak',
+];
 
 const emptyHotel: HotelInput = {
   name: '',
@@ -73,7 +158,7 @@ function passengerTypeLabel(passengerType: PassengerType) {
 }
 
 function roomStatus(customer: Customer) {
-  return customer.roomNo ? `${customer.hotelName} / ${customer.roomNo}` : 'Atanmadı';
+  return customer.roomId ? `${customer.hotelName} / ${customer.tourName || 'Tur yok'}` : 'Atanmadı';
 }
 function formatDate(value: string | null) {
   if (!value) {
@@ -114,7 +199,6 @@ export default function App() {
   }
 
   async function refreshData(showMessage = false) {
-    setLoading(true);
     try {
       const [nextCustomers, nextHotels, nextTours, nextRooms, nextAssignments] = await Promise.all([
         unwrap(window.api.customers.list()),
@@ -250,10 +334,10 @@ export default function App() {
               <HotelsView hotels={hotels} rooms={rooms} perform={perform} />
             )}
             {activeTab === 'rooming' && (
-              <RoomingView customers={customers} hotels={hotels} rooms={rooms} assignments={assignments} perform={perform} />
+              <RoomingView customers={customers} tours={tours} rooms={rooms} assignments={assignments} perform={perform} />
             )}
             {activeTab === 'exports' && (
-              <ExportsView perform={perform} />
+              <ExportsView tours={tours} perform={perform} />
             )}
             {activeTab === 'about' && (
               <AboutView />
@@ -293,7 +377,7 @@ function CustomersView({
       return customers;
     }
     return customers.filter((customer) =>
-      [customer.fullName, customer.documentNo, customer.phone, customer.tourName, customer.tourHotelName, customer.hotelName, customer.roomNo]
+      [customer.fullName, customer.documentNo, customer.phone, customer.connection, customer.tourName, customer.tourHotelName, customer.hotelName, customer.roomNo]
         .filter(Boolean)
         .some((value) => String(value).toLocaleLowerCase('tr-TR').includes(needle))
     );
@@ -313,6 +397,7 @@ function CustomersView({
       gender: customer.gender,
       passengerType: customer.passengerType || 'adult',
       birthDate: customer.birthDate || '',
+      connection: customer.connection || '',
       tourId: customer.tourId || 0,
       notes: customer.notes || '',
     });
@@ -368,6 +453,19 @@ function CustomersView({
             <input type="date" value={form.birthDate} onChange={(event) => setForm({ ...form, birthDate: event.target.value })} />
           </label>
           <label>
+            <span>Bağlantı</span>
+            <select value={form.connection} onChange={(event) => setForm({ ...form, connection: event.target.value })}>
+              <option value="">İl seçin</option>
+              {turkishProvinces.map((province) => (
+                <option key={province} value={province}>
+                  {province}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className="formGrid">
+          <label>
             <span>Tur</span>
             <select value={form.tourId} onChange={(event) => setForm({ ...form, tourId: Number(event.target.value) })}>
               <option value={0}>Tur seçin</option>
@@ -409,6 +507,7 @@ function CustomersView({
                 <th>Ad Soyad</th>
                 <th>Cinsiyet</th>
                 <th>Yaş Grubu</th>
+                <th>Bağlantı</th>
                 <th>Telefon</th>
                 <th>Tur</th>
                 <th>Oda Durumu</th>
@@ -424,6 +523,7 @@ function CustomersView({
                   </td>
                   <td>{genderLabel(customer.gender)}</td>
                   <td>{passengerTypeLabel(customer.passengerType)}</td>
+                  <td>{customer.connection || '-'}</td>
                   <td>{customer.phone || '-'}</td>
                   <td>
                     <strong>{customer.tourName || '-'}</strong>
@@ -448,7 +548,7 @@ function CustomersView({
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && <EmptyRow colSpan={7} text="Kayıt bulunamadı." />}
+              {filtered.length === 0 && <EmptyRow colSpan={8} text="Kayıt bulunamadı." />}
             </tbody>
           </table>
         </div>
@@ -522,9 +622,9 @@ function ToursView({
           </label>
         </div>
         <label>
-          <span>Otel</span>
+          <span>Bölge</span>
           <select value={form.hotelId} onChange={(event) => setForm({ ...form, hotelId: Number(event.target.value) })} required>
-            <option value={0}>Otel seçin</option>
+            <option value={0}>Bölge seçin</option>
             {hotels.map((hotel) => (
               <option key={hotel.id} value={hotel.id}>
                 {hotel.name}
@@ -558,7 +658,7 @@ function ToursView({
               <tr>
                 <th>Tur</th>
                 <th>Tarih</th>
-                <th>Otel</th>
+                <th>Bölge</th>
                 <th>Müşteri</th>
                 <th aria-label="Islemler" />
               </tr>
@@ -629,8 +729,8 @@ function HotelsView({
     setEditingHotelId(null);
   }
 
-  function resetRoom(hotelId = selectedHotelId) {
-    setRoomForm(emptyRoom(hotelId));
+  function resetRoom(hotelId = selectedHotelId, capacity = roomForm.capacity) {
+    setRoomForm({ ...emptyRoom(hotelId), capacity });
     setEditingRoomId(null);
   }
 
@@ -653,12 +753,11 @@ function HotelsView({
     await perform(async () => {
       if (editingRoomId) {
         await unwrapResult(window.api.rooms.update(editingRoomId, {
-          roomNo: roomForm.roomNo,
           capacity: roomForm.capacity,
-          notes: roomForm.notes,
+          notes: '',
         }));
       } else {
-        await unwrapResult(window.api.rooms.create(roomForm));
+        await unwrapResult(window.api.rooms.create({ ...roomForm, roomNo: '', notes: '' }));
       }
       resetRoom(roomForm.hotelId);
     }, editingRoomId ? 'Oda güncellendi.' : 'Oda eklendi.');
@@ -668,9 +767,9 @@ function HotelsView({
     <section className="workspace hotelLayout">
       <section className="panel">
         <form className="stackForm" onSubmit={submitHotel}>
-          <PanelTitle title={editingHotelId ? 'Otel Düzenle' : 'Otel Ekle'} />
+          <PanelTitle title={editingHotelId ? 'Bölge Düzenle' : 'Bölge Ekle'} />
           <label>
-            <span>Otel Adı</span>
+            <span>Bölge Adı</span>
             <input value={hotelForm.name} onChange={(event) => setHotelForm({ ...hotelForm, name: event.target.value })} required />
           </label>
           <label>
@@ -759,10 +858,6 @@ function HotelsView({
             </select>
           </label>
           <label>
-            <span>Oda No</span>
-            <input value={roomForm.roomNo} onChange={(event) => setRoomForm({ ...roomForm, roomNo: event.target.value })} required />
-          </label>
-          <label>
             <span>Kapasite</span>
             <select value={roomForm.capacity} onChange={(event) => setRoomForm({ ...roomForm, capacity: Number(event.target.value) })}>
               <option value={1}>1 kişilik</option>
@@ -770,10 +865,6 @@ function HotelsView({
               <option value={3}>3 kişilik</option>
               <option value={4}>4 kişilik</option>
             </select>
-          </label>
-          <label>
-            <span>Notlar</span>
-            <input value={roomForm.notes} onChange={(event) => setRoomForm({ ...roomForm, notes: event.target.value })} />
           </label>
           <div className="buttonRow">
             <button className="primaryButton" type="submit" disabled={!roomForm.hotelId}>
@@ -793,20 +884,16 @@ function HotelsView({
           <table>
             <thead>
               <tr>
-                <th>Oda No</th>
                 <th>Kapasite</th>
                 <th>Dolu</th>
-                <th>Not</th>
                 <th aria-label="Islemler" />
               </tr>
             </thead>
             <tbody>
               {selectedRooms.map((room) => (
                 <tr key={room.id}>
-                  <td><strong>{room.roomNo}</strong></td>
-                  <td>{room.capacity}</td>
+                  <td><strong>{room.capacity} Kişilik Oda</strong></td>
                   <td>{room.occupantCount}</td>
-                  <td>{room.notes || '-'}</td>
                   <td className="actions">
                     <button
                       type="button"
@@ -815,9 +902,9 @@ function HotelsView({
                         setEditingRoomId(room.id);
                         setRoomForm({
                           hotelId: room.hotelId,
-                          roomNo: room.roomNo,
+                          roomNo: '',
                           capacity: room.capacity,
-                          notes: room.notes || '',
+                          notes: '',
                         });
                       }}
                     >
@@ -837,7 +924,7 @@ function HotelsView({
                   </td>
                 </tr>
               ))}
-              {selectedRooms.length === 0 && <EmptyRow colSpan={5} text="Bu otelde oda yok." />}
+              {selectedRooms.length === 0 && <EmptyRow colSpan={3} text="Bu otelde oda yok." />}
             </tbody>
           </table>
         </div>
@@ -848,39 +935,67 @@ function HotelsView({
 
 function RoomingView({
   customers,
-  hotels,
+  tours,
   rooms,
   assignments,
   perform,
 }: {
   customers: Customer[];
-  hotels: HotelType[];
+  tours: Tour[];
   rooms: Room[];
   assignments: Assignment[];
   perform: (action: () => Promise<void>, success: string) => Promise<void>;
 }) {
-  const [selectedCustomerId, setSelectedCustomerId] = useState<number>(customers[0]?.id || 0);
-  const [hotelFilter, setHotelFilter] = useState<number>(hotels[0]?.id || 0);
+  const [selectedTourId, setSelectedTourId] = useState<number>(tours[0]?.id || 0);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<number>(0);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const toursWithCustomers = useMemo(
+    () => tours.filter((tour) => customers.some((customer) => customer.tourId === tour.id)),
+    [customers, tours]
+  );
 
   useEffect(() => {
-    if (!selectedCustomerId && customers.length > 0) {
-      setSelectedCustomerId(customers[0].id);
+    if (selectedTourId && !toursWithCustomers.some((tour) => tour.id === selectedTourId)) {
+      setSelectedTourId(0);
+      return;
     }
-  }, [customers, selectedCustomerId]);
+    if (!selectedTourId && toursWithCustomers.length > 0) {
+      setSelectedTourId(toursWithCustomers[0].id);
+    }
+  }, [selectedTourId, toursWithCustomers]);
+
+  const selectedTour = useMemo(() => tours.find((tour) => tour.id === selectedTourId), [tours, selectedTourId]);
+  const tourCustomers = useMemo(
+    () => (selectedTourId ? customers.filter((customer) => customer.tourId === selectedTourId) : []),
+    [customers, selectedTourId]
+  );
+  const filteredCustomers = useMemo(() => {
+    const normalizedSearch = customerSearch.trim().toLocaleLowerCase('tr-TR');
+    if (!normalizedSearch) {
+      return tourCustomers;
+    }
+    return tourCustomers.filter((customer) =>
+      `${customer.fullName} ${customer.documentNo || ''} ${customer.phone || ''}`.toLocaleLowerCase('tr-TR').includes(normalizedSearch)
+    );
+  }, [customerSearch, tourCustomers]);
 
   useEffect(() => {
-    if (!hotelFilter && hotels.length > 0) {
-      setHotelFilter(hotels[0].id);
+    if (selectedCustomerId && !tourCustomers.some((customer) => customer.id === selectedCustomerId)) {
+      setSelectedCustomerId(0);
+      return;
     }
-  }, [hotels, hotelFilter]);
+    if (!selectedCustomerId && tourCustomers.length > 0) {
+      setSelectedCustomerId(tourCustomers[0].id);
+    }
+  }, [selectedCustomerId, tourCustomers]);
 
-  const selectedCustomer = customers.find((customer) => customer.id === selectedCustomerId);
-  const visibleRooms = hotelFilter ? rooms.filter((room) => room.hotelId === hotelFilter) : rooms;
-  const unassigned = customers.filter((customer) => !customer.roomId);
-  const assigned = customers.filter((customer) => customer.roomId);
+  const selectedCustomer = tourCustomers.find((customer) => customer.id === selectedCustomerId);
+  const visibleRooms = selectedTour?.hotelId ? rooms.filter((room) => room.hotelId === selectedTour.hotelId) : [];
+  const unassigned = tourCustomers.filter((customer) => !customer.roomId);
+  const assigned = tourCustomers.filter((customer) => customer.roomId);
 
   function occupants(roomId: number) {
-    return assignments.filter((assignment) => assignment.roomId === roomId);
+    return assignments.filter((assignment) => assignment.roomId === roomId && assignment.tourId === selectedTourId);
   }
 
   return (
@@ -888,12 +1003,30 @@ function RoomingView({
       <section className="panel">
         <PanelTitle title="Müşteri Seç" />
         <label>
+          <span>Tur</span>
+          <select value={selectedTourId} onChange={(event) => setSelectedTourId(Number(event.target.value))}>
+            <option value={0}>Tur seçin</option>
+            {toursWithCustomers.map((tour) => (
+              <option key={tour.id} value={tour.id}>
+                {tour.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
           <span>Müşteri</span>
-          <select value={selectedCustomerId} onChange={(event) => setSelectedCustomerId(Number(event.target.value))}>
+          <input
+            className="customerSelectSearch"
+            value={customerSearch}
+            onChange={(event) => setCustomerSearch(event.target.value)}
+            placeholder="Müşteri ara"
+            disabled={!selectedTourId}
+          />
+          <select value={selectedCustomerId} onChange={(event) => setSelectedCustomerId(Number(event.target.value))} disabled={!selectedTourId}>
             <option value={0}>Seçin</option>
-            {customers.map((customer) => (
+            {filteredCustomers.map((customer) => (
               <option key={customer.id} value={customer.id}>
-                {customer.fullName}{customer.tourName ? ` - ${customer.tourName}` : ''}
+                {customer.fullName}
               </option>
             ))}
           </select>
@@ -935,14 +1068,7 @@ function RoomingView({
       <section className="panel roomsPanel">
         <div className="listHeader">
           <PanelTitle title="Oda Yerleşimi" />
-          <select value={hotelFilter} onChange={(event) => setHotelFilter(Number(event.target.value))}>
-            <option value={0}>Tüm oteller</option>
-            {hotels.map((hotel) => (
-              <option key={hotel.id} value={hotel.id}>
-                {hotel.name}
-              </option>
-            ))}
-          </select>
+          <span className="roomingHotelName">{selectedTour?.hotelName || 'Tur oteli seçilmedi'}</span>
         </div>
 
         <div className="roomGrid">
@@ -953,7 +1079,7 @@ function RoomingView({
               <article className={classNames('roomCard', full && 'full')} key={room.id}>
                 <header>
                   <div>
-                    <strong>{room.roomNo}</strong>
+                    <strong>{room.capacity} Kişilik Oda</strong>
                     <span>{room.hotelName}</span>
                   </div>
                   <em>
@@ -971,7 +1097,7 @@ function RoomingView({
                 <button
                   type="button"
                   className="primaryButton compact"
-                  disabled={!selectedCustomer}
+                  disabled={!selectedTourId || !selectedCustomer || full}
                   onClick={() =>
                     selectedCustomer &&
                     perform(async () => {
@@ -993,10 +1119,35 @@ function RoomingView({
 }
 
 function ExportsView({
+  tours,
   perform,
 }: {
+  tours: Tour[];
   perform: (action: () => Promise<void>, success: string) => Promise<void>;
 }) {
+  const [selectedTourId, setSelectedTourId] = useState<number>(tours[0]?.id || 0);
+  const [tourSearch, setTourSearch] = useState('');
+  const toursWithCustomers = useMemo(() => tours.filter((tour) => tour.customerCount > 0), [tours]);
+  const filteredTours = useMemo(() => {
+    const normalizedSearch = tourSearch.trim().toLocaleLowerCase('tr-TR');
+    if (!normalizedSearch) {
+      return toursWithCustomers;
+    }
+    return toursWithCustomers.filter((tour) =>
+      `${tour.name} ${tour.hotelName || ''}`.toLocaleLowerCase('tr-TR').includes(normalizedSearch)
+    );
+  }, [tourSearch, toursWithCustomers]);
+
+  useEffect(() => {
+    if (selectedTourId && !toursWithCustomers.some((tour) => tour.id === selectedTourId)) {
+      setSelectedTourId(0);
+      return;
+    }
+    if (!selectedTourId && toursWithCustomers.length > 0) {
+      setSelectedTourId(toursWithCustomers[0].id);
+    }
+  }, [selectedTourId, toursWithCustomers]);
+
   async function exportExcel(kind: 'customers' | 'rooming') {
     await perform(async () => {
       const result = await unwrapResult(window.api.exports.excel(kind));
@@ -1007,7 +1158,10 @@ function ExportsView({
   }
   async function exportPdf() {
     await perform(async () => {
-      const result = await unwrapResult(window.api.exports.pdf('rooming'));
+      if (!selectedTourId) {
+        throw new Error('PDF çıktısı için tur seçin.');
+      }
+      const result = await unwrapResult(window.api.exports.pdf('rooming', selectedTourId));
       if (result.canceled) {
         throw new Error('Kaydetme işlemi iptal edildi.');
       }
@@ -1021,11 +1175,31 @@ function ExportsView({
         <strong>Müşteri Listesi</strong>
         <span>Kayıtlı müşterileri oda durumlarıyla Excel dosyasına aktar.</span>
       </button>
-      <button className="exportButton" type="button" onClick={exportPdf}>
+      <div className="exportButton exportControl">
         <BedDouble size={28} aria-hidden />
         <strong>Oda Yerleşimi PDF</strong>
-        <span>Otellere göre oda kartları ve kişi yerleşimini görsel PDF olarak aktar.</span>
-      </button>
+        <label>
+          <span>Tur</span>
+          <input
+            className="customerSelectSearch"
+            value={tourSearch}
+            onChange={(event) => setTourSearch(event.target.value)}
+            placeholder="Tur ara"
+          />
+          <select value={selectedTourId} onChange={(event) => setSelectedTourId(Number(event.target.value))}>
+            <option value={0}>Tur seçin</option>
+            {filteredTours.map((tour) => (
+              <option key={tour.id} value={tour.id}>
+                {tour.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button className="primaryButton compact" type="button" onClick={exportPdf} disabled={!selectedTourId}>
+          <Download size={16} aria-hidden />
+          <span>PDF Al</span>
+        </button>
+      </div>
     </section>
   );
 }

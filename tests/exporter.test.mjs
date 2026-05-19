@@ -14,6 +14,7 @@ describe('excel exporter', () => {
         gender: 'male',
         passengerType: 'adult',
         birthDate: '',
+        connection: 'Ankara',
         tourName: 'A',
         tourHotelName: 'Mekke Otel',
         notes: '',
@@ -24,7 +25,8 @@ describe('excel exporter', () => {
     const sheet = workbook.getWorksheet('Müşteriler');
 
     expect(sheet.getRow(1).values).toContain('Ad Soyad');
-    expect(sheet.getRow(2).getCell(9).value).toBe('Mekke Otel / 101');
+    expect(sheet.getRow(2).getCell(7).value).toBe('Ankara');
+    expect(sheet.getRow(2).getCell(10).value).toBe('Mekke Otel / 101');
   });
 
   it('creates rooming workbook with occupants', async () => {
@@ -35,6 +37,6 @@ describe('excel exporter', () => {
     const sheet = workbook.getWorksheet('Oda Yerleşimi');
 
     expect(sheet.getRow(1).values).toContain('Müşteriler');
-    expect(sheet.getRow(2).getCell(5).value).toBe('Ayse Kaya');
+    expect(sheet.getRow(2).getCell(4).value).toBe('Ayse Kaya');
   });
 });

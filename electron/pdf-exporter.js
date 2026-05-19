@@ -21,7 +21,8 @@ function groupByHotel(rooms) {
   }, new Map());
 }
 
-function createRoomingHtml(rooms, assignments) {
+function createRoomingHtml(rooms, assignments, options = {}) {
+  const title = options.title || 'Oda Yerleşimi';
   const occupiedRooms = rooms.filter((room) =>
     assignments.some((assignment) => assignment.roomId === room.id)
   );
@@ -45,10 +46,9 @@ function createRoomingHtml(rooms, assignments) {
             <article class="room-card">
               <header>
                 <div>
-                  <span class="label">Oda</span>
-                  <h3>${escapeHtml(room.roomNo)}</h3>
+                  <span class="label">${escapeHtml(room.capacity)} Kişilik Oda</span>
+                  <div class="write-box"></div>
                 </div>
-                <p>${occupants.length}/${escapeHtml(room.capacity)}</p>
               </header>
               <ul>${occupantItems}</ul>
               ${room.notes ? `<footer>${escapeHtml(room.notes)}</footer>` : ''}
@@ -83,6 +83,11 @@ function createRoomingHtml(rooms, assignments) {
             font-family: Arial, Helvetica, sans-serif;
           }
           h2, h3, p { margin: 0; }
+          .document-title {
+            margin-bottom: 12px;
+            font-size: 22px;
+            color: #244743;
+          }
           .hotel-section { break-inside: avoid; margin-bottom: 18px; }
           .hotel-heading {
             display: flex;
@@ -120,16 +125,14 @@ function createRoomingHtml(rooms, assignments) {
             border-bottom: 1px solid #d9ded8;
             padding: 9px 10px;
           }
-          .label { color: #66736d; font-size: 10px; text-transform: uppercase; }
-          .room-card h3 { font-size: 20px; color: #244743; }
-          .room-card header p {
-            min-width: 42px;
-            border-radius: 999px;
+          .label { color: #244743; font-size: 13px; font-weight: 700; }
+          .write-box {
+            width: 118px;
+            height: 24px;
+            margin-top: 5px;
+            border: 1px solid #9aa69f;
+            border-radius: 4px;
             background: #ffffff;
-            color: #244743;
-            font-weight: 700;
-            text-align: center;
-            padding: 5px 8px;
           }
           ul { list-style: none; margin: 0; padding: 8px; display: grid; gap: 6px; }
           li {
@@ -148,13 +151,14 @@ function createRoomingHtml(rooms, assignments) {
         </style>
       </head>
       <body>
-        ${hotelSections || '<p>Yerle?en m??teri bulunamad?.</p>'}
+        <h1 class="document-title">${escapeHtml(title)}</h1>
+        ${hotelSections || '<p>Yerleşen müşteri bulunamadı.</p>'}
       </body>
     </html>
   `;
 }
 
-async function writeRoomingPdf(filePath, rooms, assignments) {
+async function writeRoomingPdf(filePath, rooms, assignments, options = {}) {
   const window = new BrowserWindow({
     show: false,
     webPreferences: {
@@ -163,7 +167,7 @@ async function writeRoomingPdf(filePath, rooms, assignments) {
   });
 
   try {
-    const html = createRoomingHtml(rooms, assignments);
+    const html = createRoomingHtml(rooms, assignments, options);
     await window.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
     const pdf = await window.webContents.printToPDF({
       printBackground: true,

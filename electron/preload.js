@@ -37,6 +37,6 @@ contextBridge.exposeInMainWorld('api', {
   },
   exports: {
     excel: (kind) => invoke('exports:excel', { kind }),
-    pdf: (kind) => invoke('exports:pdf', { kind }),
+    pdf: (kind, tourId) => invoke('exports:pdf', { kind, tourId }),
   },
 });

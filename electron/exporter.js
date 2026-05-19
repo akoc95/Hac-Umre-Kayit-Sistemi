@@ -44,6 +44,7 @@ async function createCustomersWorkbook(customers) {
     { header: 'Cinsiyet', key: 'gender' },
     { header: 'Yaş Grubu', key: 'passengerType' },
     { header: 'Doğum Tarihi', key: 'birthDate' },
+    { header: 'Bağlantı', key: 'connection' },
     { header: 'Tur', key: 'tourName' },
     { header: 'Tur Oteli', key: 'tourHotelName' },
     { header: 'Oda Durumu', key: 'roomStatus' },
@@ -58,6 +59,7 @@ async function createCustomersWorkbook(customers) {
       gender: genderText(customer.gender),
       passengerType: passengerTypeText(customer.passengerType),
       birthDate: customer.birthDate || '',
+      connection: customer.connection || '',
       tourName: customer.tourName || '',
       tourHotelName: customer.tourHotelName || '',
       roomStatus: roomText(customer),
@@ -75,8 +77,7 @@ async function createRoomingWorkbook(rooms, assignments) {
   const sheet = workbook.addWorksheet('Oda Yerleşimi');
   sheet.columns = [
     { header: 'Otel', key: 'hotelName' },
-    { header: 'Oda No', key: 'roomNo' },
-    { header: 'Kapasite', key: 'capacity' },
+    { header: 'Oda Tipi', key: 'roomType' },
     { header: 'Dolu', key: 'occupantCount' },
     { header: 'Müşteriler', key: 'customers' },
     { header: 'Cinsiyet', key: 'gender' },
@@ -88,8 +89,7 @@ async function createRoomingWorkbook(rooms, assignments) {
     const gender = occupants.length > 0 ? genderText(occupants[0].customerGender) : '';
     sheet.addRow({
       hotelName: room.hotelName,
-      roomNo: room.roomNo,
-      capacity: room.capacity,
+      roomType: `${room.capacity} Kişilik Oda`,
       occupantCount: occupants.length,
       customers: occupants.map((occupant) => occupant.customerName).join(', '),
       gender,

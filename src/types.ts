@@ -8,6 +8,7 @@ export interface CustomerInput {
   gender: Gender;
   passengerType: PassengerType;
   birthDate: string;
+  connection: string;
   tourId: number;
   notes: string;
 }
@@ -70,6 +71,7 @@ export interface Assignment {
   customerId: number;
   customerName: string;
   customerGender: Gender;
+  tourId: number;
   roomId: number;
   roomNo: string;
   hotelId: number;

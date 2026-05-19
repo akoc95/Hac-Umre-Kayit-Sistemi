@@ -424,7 +424,7 @@ td small {
 
 .roomForm {
   display: grid;
-  grid-template-columns: minmax(140px, 1.2fr) minmax(90px, 0.8fr) 120px minmax(120px, 1fr) auto;
+  grid-template-columns: minmax(180px, 1fr) 140px auto;
   gap: 10px;
   align-items: end;
 }
@@ -441,6 +441,10 @@ td small {
   padding: 12px;
   margin-top: 12px;
   background: #fffaf1;
+}
+
+.customerSelectSearch {
+  margin-bottom: 8px;
 }
 
 .selectedCustomer small,
@@ -484,6 +488,11 @@ td small {
   display: grid;
   align-content: start;
   gap: 14px;
+}
+
+.roomingHotelName {
+  color: #53625c;
+  font-weight: 700;
 }
 
 .roomGrid {
@@ -577,13 +586,26 @@ td small {
   background: #eef5ec;
 }
 
+.exportControl:hover {
+  border-color: #ded7c9;
+  background: #fffdf8;
+}
+
 .exportButton strong {
   font-size: 18px;
 }
 
-.exportButton span {
+.exportButton > span {
   color: #65736d;
   line-height: 1.45;
+}
+
+.exportControl label {
+  width: 100%;
+}
+
+.exportControl select {
+  margin-top: 6px;
 }
 
 .notice {
