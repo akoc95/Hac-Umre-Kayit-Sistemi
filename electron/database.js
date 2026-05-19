@@ -301,7 +301,7 @@ function createDatabaseStore(options) {
       LEFT JOIN room_assignments ra ON ra.customer_id = c.id
       LEFT JOIN rooms r ON r.id = ra.room_id
       LEFT JOIN hotels h ON h.id = r.hotel_id
-      ORDER BY c.full_name COLLATE NOCASE
+      ORDER BY c.id ASC
       `
     ).map(rowToCustomer);
   }

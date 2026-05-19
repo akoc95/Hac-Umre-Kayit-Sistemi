@@ -365,6 +365,33 @@ td small {
   background: #eef4eb;
 }
 
+.paginationBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #66736d;
+  font-size: 13px;
+}
+
+.paginationButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.paginationButtons button {
+  min-height: 34px;
+  border: 1px solid #c9d8c7;
+  border-radius: 7px;
+  background: #eef4eb;
+  color: #284743;
+  padding: 0 10px;
+}
+
+.paginationButtons button:not(:disabled):hover {
+  background: #e3eadf;
+}
+
 .emptyCell,
 .emptyBox {
   color: #6f7c76;
@@ -385,6 +412,9 @@ td small {
   display: grid;
   gap: 8px;
   margin-top: 16px;
+  max-height: 310px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .hotelButton {
@@ -398,6 +428,7 @@ td small {
   color: #22302d;
   padding: 12px;
   text-align: left;
+  cursor: pointer;
 }
 
 .hotelButton.active,
@@ -420,6 +451,19 @@ td small {
   display: flex;
   gap: 9px;
   color: #42615b;
+}
+
+.hotelActions button {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #45605b;
+}
+
+.hotelActions button:hover {
+  background: #eef4eb;
 }
 
 .roomForm {
@@ -609,13 +653,25 @@ td small {
 }
 
 .notice {
+  position: fixed;
+  right: 28px;
+  bottom: 36px;
+  z-index: 30;
+  min-width: 280px;
+  max-width: min(560px, calc(100vw - 56px));
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 14px;
+  padding: 12px 14px;
+  box-shadow: 0 14px 36px rgba(34, 48, 45, 0.18);
+}
+
+.notice span {
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .notice.success {
@@ -640,6 +696,35 @@ td small {
   border-radius: 7px;
   background: transparent;
   color: inherit;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: rgba(34, 48, 45, 0.32);
+  padding: 20px;
+}
+
+.confirmDialog {
+  width: min(360px, 100%);
+  border: 1px solid #ded7c9;
+  border-radius: 8px;
+  background: #fffdf8;
+  padding: 18px;
+  box-shadow: 0 18px 50px rgba(34, 48, 45, 0.22);
+}
+
+.confirmDialog p {
+  margin: 0 0 16px;
+  color: #53615b;
+  line-height: 1.45;
+}
+
+.confirmActions {
+  justify-content: flex-end;
 }
 
 .loading {

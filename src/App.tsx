@@ -19,6 +19,9 @@ import type { Assignment, Customer, CustomerInput, Gender, Hotel as HotelType, H
 
 type Tab = 'customers' | 'tours' | 'hotels' | 'rooming' | 'exports' | 'about';
 type Notice = { tone: 'success' | 'error' | 'info'; text: string } | null;
+type ConfirmRequest = { message: string; action: () => Promise<void>; success: string } | null;
+type PerformAction = (action: () => Promise<void>, success: string) => Promise<void>;
+type ConfirmAction = (message: string, action: () => Promise<void>, success: string) => void;
 
 const emptyCustomer: CustomerInput = {
   fullName: '',
@@ -137,6 +140,8 @@ const emptyRoom = (hotelId = 0): RoomInput => ({
   notes: '',
 });
 
+const recordsPerPage = 10;
+
 const tabs: Array<{ id: Tab; label: string; icon: typeof Users }> = [
   { id: 'hotels', label: 'Otel ve Oda', icon: Building2 },
   { id: 'tours', label: 'Turlar', icon: CalendarDays },
@@ -160,11 +165,22 @@ function passengerTypeLabel(passengerType: PassengerType) {
 function roomStatus(customer: Customer) {
   return customer.roomId ? `${customer.hotelName} / ${customer.tourName || 'Tur yok'}` : 'Atanmadı';
 }
-function formatDate(value: string | null) {
+function parseDate(value: string | null) {
   if (!value) {
-    return '';
+    return null;
   }
-  return new Intl.DateTimeFormat('tr-TR').format(new Date(`${value}T00:00:00`));
+
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  const date = dateOnlyMatch
+    ? new Date(Number(dateOnlyMatch[1]), Number(dateOnlyMatch[2]) - 1, Number(dateOnlyMatch[3]))
+    : new Date(value);
+
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatDate(value: string | null) {
+  const date = parseDate(value);
+  return date ? new Intl.DateTimeFormat('tr-TR').format(date) : '';
 }
 
 function formatDateRange(startDate: string | null, endDate: string | null) {
@@ -188,6 +204,7 @@ export default function App() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [notice, setNotice] = useState<Notice>(null);
+  const [confirmRequest, setConfirmRequest] = useState<ConfirmRequest>(null);
   const [loading, setLoading] = useState(true);
 
   async function unwrap<T>(promise: Promise<{ ok: true; data: T } | { ok: false; error: string }>) {
@@ -232,9 +249,30 @@ export default function App() {
     }
   }
 
+  function confirmAction(message: string, action: () => Promise<void>, success: string) {
+    setConfirmRequest({ message, action, success });
+  }
+
+  async function runConfirmedAction() {
+    const request = confirmRequest;
+    if (!request) {
+      return;
+    }
+    setConfirmRequest(null);
+    await perform(request.action, request.success);
+  }
+
   useEffect(() => {
     refreshData();
   }, []);
+
+  useEffect(() => {
+    if (!notice) {
+      return;
+    }
+    const timeout = window.setTimeout(() => setNotice(null), 3000);
+    return () => window.clearTimeout(timeout);
+  }, [notice]);
 
   const stats = useMemo(() => {
     const assigned = customers.filter((customer) => customer.roomId).length;
@@ -325,13 +363,13 @@ export default function App() {
         ) : (
           <>
             {activeTab === 'customers' && (
-              <CustomersView customers={customers} tours={tours} perform={perform} />
+              <CustomersView customers={customers} tours={tours} perform={perform} confirmAction={confirmAction} />
             )}
             {activeTab === 'tours' && (
-              <ToursView tours={tours} hotels={hotels} perform={perform} />
+              <ToursView tours={tours} hotels={hotels} perform={perform} confirmAction={confirmAction} />
             )}
             {activeTab === 'hotels' && (
-              <HotelsView hotels={hotels} rooms={rooms} perform={perform} />
+              <HotelsView hotels={hotels} rooms={rooms} perform={perform} confirmAction={confirmAction} />
             )}
             {activeTab === 'rooming' && (
               <RoomingView customers={customers} tours={tours} rooms={rooms} assignments={assignments} perform={perform} />
@@ -343,6 +381,22 @@ export default function App() {
               <AboutView />
             )}
           </>
+        )}
+        {confirmRequest && (
+          <div className="modalBackdrop" role="presentation">
+            <div className="confirmDialog" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+              <h2 id="confirm-title">Onay</h2>
+              <p>{confirmRequest.message}</p>
+              <div className="buttonRow confirmActions">
+                <button className="ghostButton" type="button" onClick={() => setConfirmRequest(null)}>
+                  Vazgeç
+                </button>
+                <button className="primaryButton" type="button" onClick={runConfirmedAction}>
+                  Sil
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </main>
     </div>
@@ -362,26 +416,44 @@ function CustomersView({
   customers,
   tours,
   perform,
+  confirmAction,
 }: {
   customers: Customer[];
   tours: Tour[];
-  perform: (action: () => Promise<void>, success: string) => Promise<void>;
+  perform: PerformAction;
+  confirmAction: ConfirmAction;
 }) {
   const [form, setForm] = useState<CustomerInput>(emptyCustomer);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [query, setQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase('tr-TR');
+    const sortedCustomers = [...customers].sort((first, second) => first.id - second.id);
     if (!needle) {
-      return customers;
+      return sortedCustomers;
     }
-    return customers.filter((customer) =>
-      [customer.fullName, customer.documentNo, customer.phone, customer.connection, customer.tourName, customer.tourHotelName, customer.hotelName, customer.roomNo]
+    return sortedCustomers.filter((customer) =>
+      [customer.id, customer.fullName, customer.documentNo, customer.phone, customer.connection, customer.tourName, customer.tourHotelName, customer.hotelName, customer.roomNo]
         .filter(Boolean)
         .some((value) => String(value).toLocaleLowerCase('tr-TR').includes(needle))
     );
   }, [customers, query]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / recordsPerPage));
+  const visibleCustomers = useMemo(
+    () => filtered.slice((currentPage - 1) * recordsPerPage, currentPage * recordsPerPage),
+    [currentPage, filtered]
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, pageCount));
+  }, [pageCount]);
 
   function reset() {
     setForm(emptyCustomer);
@@ -498,12 +570,21 @@ function CustomersView({
       <section className="panel listPanel">
         <div className="listHeader">
           <PanelTitle title="Müşteri Listesi" />
-          <input className="searchInput" placeholder="Ara" value={query} onChange={(event) => setQuery(event.target.value)} />
+          <input
+            className="searchInput"
+            placeholder="Ara"
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setCurrentPage(1);
+            }}
+          />
         </div>
         <div className="tableWrap">
           <table>
             <thead>
               <tr>
+                <th>ID</th>
                 <th>Ad Soyad</th>
                 <th>Cinsiyet</th>
                 <th>Yaş Grubu</th>
@@ -515,8 +596,9 @@ function CustomersView({
               </tr>
             </thead>
             <tbody>
-              {filtered.map((customer) => (
+              {visibleCustomers.map((customer) => (
                 <tr key={customer.id}>
+                  <td>{customer.id}</td>
                   <td>
                     <strong>{customer.fullName}</strong>
                     <small>{customer.documentNo || 'Kimlik yok'}</small>
@@ -536,11 +618,11 @@ function CustomersView({
                     </button>
                     <button
                       type="button"
-                      onClick={() =>
-                        perform(async () => {
+                      onClick={() => {
+                        confirmAction(`${customer.fullName} kaydı silinsin mi?`, async () => {
                           await unwrapResult(window.api.customers.delete(customer.id));
-                        }, 'Müşteri silindi.')
-                      }
+                        }, 'Müşteri silindi.');
+                      }}
                       title="Sil"
                     >
                       <Trash2 size={16} aria-hidden />
@@ -548,10 +630,25 @@ function CustomersView({
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && <EmptyRow colSpan={8} text="Kayıt bulunamadı." />}
+              {filtered.length === 0 && <EmptyRow colSpan={9} text="Kayıt bulunamadı." />}
             </tbody>
           </table>
         </div>
+        {filtered.length > 0 && (
+          <div className="paginationBar">
+            <span>
+              {filtered.length} kayıt - Sayfa {currentPage}/{pageCount}
+            </span>
+            <div className="paginationButtons">
+              <button type="button" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1}>
+                Önceki
+              </button>
+              <button type="button" onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))} disabled={currentPage === pageCount}>
+                Sonraki
+              </button>
+            </div>
+          </div>
+        )}
       </section>
     </section>
   );
@@ -561,19 +658,45 @@ function ToursView({
   tours,
   hotels,
   perform,
+  confirmAction,
 }: {
   tours: Tour[];
   hotels: HotelType[];
-  perform: (action: () => Promise<void>, success: string) => Promise<void>;
+  perform: PerformAction;
+  confirmAction: ConfirmAction;
 }) {
   const [form, setForm] = useState<TourInput>(emptyTour(hotels[0]?.id || 0));
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [query, setQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const filteredTours = useMemo(() => {
+    const needle = query.trim().toLocaleLowerCase('tr-TR');
+    if (!needle) {
+      return tours;
+    }
+    return tours.filter((tour) =>
+      [tour.id, tour.name, tour.hotelName, tour.notes, tour.startDate, tour.endDate, tour.customerCount]
+        .filter((value) => value !== null && value !== undefined && value !== '')
+        .some((value) => String(value).toLocaleLowerCase('tr-TR').includes(needle))
+    );
+  }, [query, tours]);
+
+  const pageCount = Math.max(1, Math.ceil(filteredTours.length / recordsPerPage));
+  const visibleTours = useMemo(
+    () => filteredTours.slice((currentPage - 1) * recordsPerPage, currentPage * recordsPerPage),
+    [currentPage, filteredTours]
+  );
 
   useEffect(() => {
     if (!form.hotelId && hotels.length > 0) {
       setForm((current) => ({ ...current, hotelId: hotels[0].id }));
     }
   }, [hotels, form.hotelId]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, pageCount));
+  }, [pageCount]);
 
   function reset(hotelId = hotels[0]?.id || 0) {
     setForm(emptyTour(hotelId));
@@ -651,7 +774,18 @@ function ToursView({
       </form>
 
       <section className="panel listPanel">
-        <PanelTitle title="Tur Listesi" />
+        <div className="listHeader">
+          <PanelTitle title="Tur Listesi" />
+          <input
+            className="searchInput"
+            placeholder="Ara"
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
         <div className="tableWrap">
           <table>
             <thead>
@@ -664,7 +798,7 @@ function ToursView({
               </tr>
             </thead>
             <tbody>
-              {tours.map((tour) => (
+              {visibleTours.map((tour) => (
                 <tr key={tour.id}>
                   <td>
                     <strong>{tour.name}</strong>
@@ -679,11 +813,11 @@ function ToursView({
                     </button>
                     <button
                       type="button"
-                      onClick={() =>
-                        perform(async () => {
+                      onClick={() => {
+                        confirmAction(`${tour.name} turu silinsin mi?`, async () => {
                           await unwrapResult(window.api.tours.delete(tour.id));
-                        }, 'Tur silindi.')
-                      }
+                        }, 'Tur silindi.');
+                      }}
                       title="Sil"
                     >
                       <Trash2 size={16} aria-hidden />
@@ -691,10 +825,25 @@ function ToursView({
                   </td>
                 </tr>
               ))}
-              {tours.length === 0 && <EmptyRow colSpan={5} text="Henüz tur oluşturulmadı." />}
+              {filteredTours.length === 0 && <EmptyRow colSpan={5} text="Kayıt bulunamadı." />}
             </tbody>
           </table>
         </div>
+        {filteredTours.length > 0 && (
+          <div className="paginationBar">
+            <span>
+              {filteredTours.length} kayıt - Sayfa {currentPage}/{pageCount}
+            </span>
+            <div className="paginationButtons">
+              <button type="button" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1}>
+                Önceki
+              </button>
+              <button type="button" onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))} disabled={currentPage === pageCount}>
+                Sonraki
+              </button>
+            </div>
+          </div>
+        )}
       </section>
     </section>
   );
@@ -704,10 +853,12 @@ function HotelsView({
   hotels,
   rooms,
   perform,
+  confirmAction,
 }: {
   hotels: HotelType[];
   rooms: Room[];
-  perform: (action: () => Promise<void>, success: string) => Promise<void>;
+  perform: PerformAction;
+  confirmAction: ConfirmAction;
 }) {
   const [hotelForm, setHotelForm] = useState<HotelInput>(emptyHotel);
   const [editingHotelId, setEditingHotelId] = useState<number | null>(null);
@@ -745,7 +896,7 @@ function HotelsView({
         setRoomForm(emptyRoom(id));
       }
       resetHotel();
-    }, editingHotelId ? 'Otel güncellendi.' : 'Otel eklendi.');
+    }, editingHotelId ? 'Bölge güncellendi.' : 'Bölge eklendi.');
   }
 
   async function submitRoom(event: FormEvent) {
@@ -796,8 +947,7 @@ function HotelsView({
 
         <div className="hotelList">
           {hotels.map((hotel) => (
-            <button
-              type="button"
+            <div
               key={hotel.id}
               className={classNames('hotelButton', selectedHotelId === hotel.id && 'active')}
               onClick={() => {
@@ -810,8 +960,9 @@ function HotelsView({
                 <small>{hotel.roomCount} oda</small>
               </span>
               <span className="hotelActions">
-                <Edit3
-                  size={16}
+                <button
+                  type="button"
+                  title="Düzenle"
                   onClick={(event) => {
                     event.stopPropagation();
                     setEditingHotelId(hotel.id);
@@ -821,18 +972,23 @@ function HotelsView({
                       notes: hotel.notes || '',
                     });
                   }}
-                />
-                <Trash2
-                  size={16}
+                >
+                  <Edit3 size={16} aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  title="Sil"
                   onClick={(event) => {
                     event.stopPropagation();
-                    perform(async () => {
+                    confirmAction(`${hotel.name} bölgesi silinsin mi?`, async () => {
                       await unwrapResult(window.api.hotels.delete(hotel.id));
-                    }, 'Otel silindi.');
+                    }, 'Bölge silindi.');
                   }}
-                />
+                >
+                  <Trash2 size={16} aria-hidden />
+                </button>
               </span>
-            </button>
+            </div>
           ))}
           {hotels.length === 0 && <div className="emptyBox">Önce otel ekleyin.</div>}
         </div>
@@ -913,11 +1069,11 @@ function HotelsView({
                     <button
                       type="button"
                       title="Sil"
-                      onClick={() =>
-                        perform(async () => {
+                      onClick={() => {
+                        confirmAction(`${room.capacity} kişilik oda silinsin mi?`, async () => {
                           await unwrapResult(window.api.rooms.delete(room.id));
-                        }, 'Oda silindi.')
-                      }
+                        }, 'Oda silindi.');
+                      }}
                     >
                       <Trash2 size={16} aria-hidden />
                     </button>
